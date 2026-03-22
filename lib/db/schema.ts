@@ -65,11 +65,26 @@ export const sessions = pgTable("sessions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Items Table (for 3D models)
+export const items = pgTable("items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  fileUrl: text("file_url").notNull(),
+  qrCodeUrl: text("qr_code_url"),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
+  items: many(items),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -86,6 +101,13 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   }),
 }));
 
+export const itemsRelations = relations(items, ({ one }) => ({
+  user: one(users, {
+    fields: [items.userId],
+    references: [users.id],
+  }),
+}));
+
 // Type Exports
 
 export type User = typeof users.$inferSelect;
@@ -94,3 +116,5 @@ export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
+export type Item = typeof items.$inferSelect;
+export type NewItem = typeof items.$inferInsert;
