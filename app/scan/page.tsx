@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { ModelViewerAR } from "@/components/interaction/ModelViewerAR";
 
 export default function ScanPage() {
   const [scannedId, setScannedId] = useState<string | null>(null);
-  const [modelUrl, setModelUrl] = useState<string | null>(null);
+  const [scannedItem, setScannedItem] = useState<{ id: string; fileUrl: string; title: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleScan = async (result: any) => {
-    if (scannedId || loading || modelUrl) return; 
+    if (scannedId || loading || scannedItem) return; 
     
     // Support newer react-qr-scanner payload structure
     const newId = Array.isArray(result) ? result[0]?.rawValue : result;
@@ -24,7 +25,7 @@ export default function ScanPage() {
         const data = await res.json();
         
         if (data.item?.fileUrl) {
-          setModelUrl(data.item.fileUrl);
+          setScannedItem(data.item);
         } else {
           setError("Model 3D tidak ditemukan untuk QR ini.");
           setTimeout(() => { setError(null); setScannedId(null); }, 3000);
@@ -62,23 +63,35 @@ export default function ScanPage() {
         </div>
       )}
 
-      {modelUrl && (
+      {scannedItem && (
         <>
           <div className="absolute inset-0 z-30 transition-opacity duration-1000">
-            <ModelViewerAR src={modelUrl} />
+            <ModelViewerAR src={scannedItem.fileUrl} />
           </div>
           
-          <button 
-            onClick={() => { setModelUrl(null); setScannedId(null); }}
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 bg-white/10 border border-white/20 backdrop-blur-md pb-3 pt-3 px-8 rounded-full text-white font-medium hover:bg-white/20 hover:scale-105 transition-all shadow-2xl"
-          >
-            Tutup 3D & Kembali Scan
-          </button>
+          <div className="absolute bottom-10 left-0 w-full z-50 flex flex-col items-center gap-3 px-6">
+            <div className="bg-black/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/10 mb-2">
+              <h2 className="text-white font-semibold text-sm truncate max-w-[200px]">{scannedItem.title}</h2>
+            </div>
+            <Link 
+              href={`/item/${scannedItem.id}`}
+              className="w-full max-w-sm bg-blue-600 border border-blue-500 backdrop-blur-md py-3 px-8 rounded-full text-white font-medium hover:bg-blue-700 hover:scale-105 transition-all shadow-xl text-center"
+            >
+              Baca Selengkapnya
+            </Link>
+
+            <button 
+              onClick={() => { setScannedItem(null); setScannedId(null); }}
+              className="w-full max-w-sm bg-white/10 border border-white/20 backdrop-blur-md pb-3 pt-3 px-8 rounded-full text-white font-medium hover:bg-white/20 transition-all shadow-2xl"
+            >
+              Tutup 3D & Kembali Scan
+            </button>
+          </div>
         </>
       )}
 
       {/* UI Overlay */}
-      {!modelUrl && !loading && (
+      {!scannedItem && !loading && (
         <div className="absolute inset-0 pointer-events-none z-10 flex flex-col items-center justify-center">
            {/* Center Frame */}
            <div className="relative w-64 h-64 border-2 border-white/40 rounded-[2rem] shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]">

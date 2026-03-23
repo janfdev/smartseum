@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { items } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const item = await db.select().from(items).where(eq(items.id, id));
