@@ -1,12 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogOut } from "lucide-react";
 import { AnimatedThemeToggler } from "./animated-theme-toggler";
-import { Button } from "./button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./dropdown-menu";
 
 export default function Navbar() {
   const [isActive, setIsActive] = useState(false);
@@ -14,8 +22,16 @@ export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
 
+  // @ts-expect-error custom user type
+  const userRole = session?.user?.role;
+
   const userInitials = session?.user?.name
-    ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    ? session.user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
     : "U";
 
   const handleClick = () => {
@@ -28,7 +44,7 @@ export default function Navbar() {
     const handleScroll = () => {
       const sections = ["beranda", "fitur", "interaktif"];
       let current = "beranda";
-      
+
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
@@ -95,22 +111,71 @@ export default function Navbar() {
             {status === "loading" ? (
               <div className="w-10 h-10 rounded-full animate-pulse bg-black/10 dark:bg-white/10" />
             ) : status === "authenticated" ? (
-              <Link href={"/admin/dashboard"}>
-                <button
-                  className="w-10 h-10 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center select-none overflow-hidden border-2 border-transparent hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all shadow-md"
-                  title="Ke Dashboard"
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <button
+                    className="w-10 h-10 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center select-none overflow-hidden border-2 border-transparent hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all shadow-md"
+                    title="Ke Dashboard"
+                  >
+                    {session.user?.image ? (
+                      <img
+                        src={session.user.image}
+                        alt="User Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      userInitials
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-64 mt-2 p-1 rounded-2xl bg-white/90 dark:bg-black/90 backdrop-blur-xl border border-black/5 dark:border-white/10 shadow-2xl"
+                  align="end"
+                  sideOffset={8}
                 >
-                  {session.user?.image ? (
-                    <img
-                      src={session.user.image}
-                      alt="User Avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    userInitials
+                  <DropdownMenuLabel className="font-normal px-3 py-2.5">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-semibold text-black dark:text-white leading-none">
+                        {session.user?.name || "User"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-emerald-400/80 font-mono truncate">
+                        {session.user?.email || "No email"}
+                      </p>
+                      {userRole && (
+                        <p className="text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                          Role: {userRole}
+                        </p>
+                      )}
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-black/5 dark:bg-white/10 mx-1" />
+
+                  {(userRole === "admin" || userRole === "uploader") && (
+                    <DropdownMenuGroup className="p-1">
+                      <Link href={"/admin/dashboard"}>
+                        <DropdownMenuItem className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-emerald-50 dark:data-[highlighted]:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 transition-colors group outline-none">
+                          <LayoutDashboard className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                          <span className="font-semibold text-sm">
+                            Dashboard Admin
+                          </span>
+                        </DropdownMenuItem>
+                      </Link>
+                    </DropdownMenuGroup>
                   )}
-                </button>
-              </Link>
+
+                  <DropdownMenuSeparator className="bg-black/5 dark:bg-white/10 mx-1" />
+
+                  <div className="p-1">
+                    <DropdownMenuItem
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                      className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-xl data-[highlighted]:bg-red-50 dark:data-[highlighted]:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors group outline-none"
+                    >
+                      <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                      <span className="font-semibold text-sm">Keluar Akun</span>
+                    </DropdownMenuItem>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link href={"/login"}>
                 <button className="px-5 py-2 text-[13px] font-semibold text-black dark:text-white bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors rounded-full border border-black/10 dark:border-white/10">
@@ -144,7 +209,11 @@ export default function Navbar() {
       >
         <div className="flex flex-col gap-2 px-4">
           {navLinks.map((link) => (
-            <Link key={link.id} href={link.href} onClick={() => setIsActive(false)}>
+            <Link
+              key={link.id}
+              href={link.href}
+              onClick={() => setIsActive(false)}
+            >
               <button
                 className={`w-full text-left px-4 py-3 text-base font-medium rounded-lg transition-colors ${
                   activeSection === link.id

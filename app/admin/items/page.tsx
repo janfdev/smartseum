@@ -23,6 +23,9 @@ type Item = {
   description: string | null;
   fileUrl: string;
   qrCodeUrl: string | null;
+  creatorName: string | null;
+  year: number | null;
+  origin: string | null;
   createdAt: string;
 };
 
@@ -31,7 +34,7 @@ type UploadStatus = "idle" | "uploading" | "success" | "error";
 export default function AdminItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Create State
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
   const [uploadMsg, setUploadMsg] = useState("");
@@ -98,18 +101,30 @@ export default function AdminItemsPage() {
     const formData = new FormData(e.currentTarget);
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
+    const origin = formData.get("origin") as string;
+    const creatorName = formData.get("creator_name") as string;
+    const yearStr = formData.get("year") as string;
+    let year = null;
+    if (yearStr) {
+      if (!/^\d+$/.test(yearStr)) {
+        alert("Kolom tahun hanya boleh berisi angka.");
+        setIsUpdating(false);
+        return;
+      }
+      year = parseInt(yearStr, 10);
+    }
 
     try {
       const res = await fetch(`/api/items/${editItem.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({ title, description, origin, creatorName, year }),
       });
       const data = await res.json();
 
       if (res.ok && data.item) {
         setItems((prev) =>
-          prev.map((item) => (item.id === data.item.id ? data.item : item))
+          prev.map((item) => (item.id === data.item.id ? data.item : item)),
         );
         setEditItem(null);
       } else {
@@ -124,8 +139,9 @@ export default function AdminItemsPage() {
 
   // ─── DELETE ────────────────────────────────────────────────────────
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Hapus artefak "${title}"? Data tidak dapat dikembalikan.`)) return;
-    
+    if (!confirm(`Hapus artefak "${title}"? Data tidak dapat dikembalikan.`))
+      return;
+
     setDeletingId(id);
     try {
       const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
@@ -143,20 +159,22 @@ export default function AdminItemsPage() {
   };
 
   const formatDate = (iso: string) =>
-    new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(
-      new Date(iso)
-    );
+    new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(iso));
 
   const withQR = items.filter((i) => i.qrCodeUrl).length;
   const recent = items.filter(
-    (i) => Date.now() - new Date(i.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000
+    (i) =>
+      Date.now() - new Date(i.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000,
   ).length;
 
   return (
     <>
       <div className="min-h-full bg-[#f7f7f5] dark:bg-[#080808] text-neutral-900 dark:text-neutral-100 font-sans relative">
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-8 space-y-8">
-
           {/* ── Stats Row ── */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
@@ -186,12 +204,16 @@ export default function AdminItemsPage() {
                 key={s.label}
                 className="bg-white dark:bg-white/4 border border-neutral-200/60 dark:border-white/6 rounded-2xl p-5 flex items-center gap-4 shadow-sm dark:shadow-none"
               >
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${s.color} ${s.bg}`}>
+                <div
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center ${s.color} ${s.bg}`}
+                >
                   {s.icon}
                 </div>
                 <div>
                   <p className="text-2xl font-bold tabular-nums">{s.value}</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 font-medium">{s.label}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 font-medium">
+                    {s.label}
+                  </p>
                 </div>
               </div>
             ))}
@@ -199,7 +221,6 @@ export default function AdminItemsPage() {
 
           {/* ── Two Column Layout ── */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
             {/* Upload Form (2 cols) */}
             <div className="lg:col-span-2">
               <div className="bg-white dark:bg-white/4 border border-neutral-200/60 dark:border-white/6 shadow-sm dark:shadow-none rounded-2xl p-6 sticky top-24">
@@ -218,20 +239,30 @@ export default function AdminItemsPage() {
                       uploadStatus === "success"
                         ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
                         : uploadStatus === "error"
-                        ? "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20"
-                        : "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20"
+                          ? "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20"
+                          : "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20"
                     }`}
                   >
-                    {uploadStatus === "success" && <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
-                    {uploadStatus === "error" && <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+                    {uploadStatus === "success" && (
+                      <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    )}
+                    {uploadStatus === "error" && (
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    )}
                     {uploadStatus === "uploading" && (
                       <div className="w-4 h-4 rounded-full border-2 border-current/30 border-t-current animate-spin flex-shrink-0" />
                     )}
-                    {uploadStatus === "uploading" ? "Memproses & mengupload..." : uploadMsg}
+                    {uploadStatus === "uploading"
+                      ? "Memproses & mengupload..."
+                      : uploadMsg}
                   </div>
                 )}
 
-                <form ref={formRef} onSubmit={handleUpload} className="space-y-4">
+                <form
+                  ref={formRef}
+                  onSubmit={handleUpload}
+                  className="space-y-4"
+                >
                   <div>
                     <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wider">
                       Nama Artefak *
@@ -251,10 +282,49 @@ export default function AdminItemsPage() {
                     </label>
                     <textarea
                       name="description"
-                      rows={3}
+                      rows={4}
                       placeholder="Kisah di balik koleksi ini..."
                       className="w-full p-3.5 rounded-xl border border-neutral-200 dark:border-white/8 bg-neutral-50 dark:bg-white/5 focus:bg-white dark:focus:bg-white/8 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm resize-none placeholder:text-neutral-400"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wider">
+                      Asal / Origin *
+                    </label>
+                    <input
+                      required
+                      name="origin"
+                      type="text"
+                      placeholder="Contoh: Indonesia"
+                      className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-white/8 bg-neutral-50 dark:bg-white/5 focus:bg-white dark:focus:bg-white/8 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm placeholder:text-neutral-400"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wider">
+                        Kreator
+                      </label>
+                      <input
+                        name="creator_name"
+                        type="text"
+                        placeholder="Contoh: Mpu Gandring"
+                        className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-white/8 bg-neutral-50 dark:bg-white/5 focus:bg-white dark:focus:bg-white/8 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm placeholder:text-neutral-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wider">
+                        Tahun
+                      </label>
+                      <input
+                        name="year"
+                        type="text"
+                        pattern="\d*"
+                        placeholder="Contoh: 1200"
+                        className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-white/8 bg-neutral-50 dark:bg-white/5 focus:bg-white dark:focus:bg-white/8 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm placeholder:text-neutral-400"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -268,12 +338,16 @@ export default function AdminItemsPage() {
                         name="file"
                         accept=".glb"
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+                        onChange={(e) =>
+                          setFileName(e.target.files?.[0]?.name ?? null)
+                        }
                       />
                       <Box className="w-8 h-8 text-neutral-400 dark:text-neutral-600 mb-2 group-hover:text-blue-400 transition-colors" />
                       <span className="text-sm font-medium text-center text-neutral-500 dark:text-neutral-400">
                         {fileName ? (
-                          <span className="text-blue-500 font-semibold">{fileName}</span>
+                          <span className="text-blue-500 font-semibold">
+                            {fileName}
+                          </span>
                         ) : (
                           "Klik untuk pilih file .glb"
                         )}
@@ -286,7 +360,9 @@ export default function AdminItemsPage() {
                     disabled={uploadStatus === "uploading"}
                     className="w-full h-11 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
-                    {uploadStatus === "uploading" ? "Memproses..." : "Upload & Generate QR"}
+                    {uploadStatus === "uploading"
+                      ? "Memproses..."
+                      : "Upload & Generate QR"}
                   </button>
                 </form>
               </div>
@@ -309,7 +385,9 @@ export default function AdminItemsPage() {
                 ) : items.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3 text-neutral-400">
                     <Box className="w-10 h-10 opacity-30" />
-                    <p className="text-sm font-medium">Belum ada koleksi. Upload sekarang!</p>
+                    <p className="text-sm font-medium">
+                      Belum ada koleksi. Upload sekarang!
+                    </p>
                   </div>
                 ) : (
                   <div className="divide-y divide-neutral-100 dark:divide-white/5">
@@ -321,7 +399,11 @@ export default function AdminItemsPage() {
                         {/* QR Thumbnail */}
                         <div className="w-12 h-12 flex-shrink-0 rounded-xl border border-neutral-200 dark:border-white/8 bg-neutral-100 dark:bg-white/5 flex items-center justify-center overflow-hidden">
                           {item.qrCodeUrl ? (
-                            <img src={item.qrCodeUrl} alt="QR" className="w-full h-full object-cover" />
+                            <img
+                              src={item.qrCodeUrl}
+                              alt="QR"
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <QrCode className="w-5 h-5 text-neutral-400" />
                           )}
@@ -329,18 +411,21 @@ export default function AdminItemsPage() {
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate">{item.title}</p>
+                          <p className="font-semibold text-sm truncate">
+                            {item.title}
+                          </p>
                           <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
                             {formatDate(item.createdAt)}
                             {!item.qrCodeUrl && (
-                              <span className="ml-2 text-amber-500 font-medium">· No QR</span>
+                              <span className="ml-2 text-amber-500 font-medium">
+                                · No QR
+                              </span>
                             )}
                           </p>
                         </div>
 
                         {/* Actions */}
                         <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                          
                           {/* Edit Item */}
                           <button
                             onClick={() => setEditItem(item)}
@@ -389,7 +474,6 @@ export default function AdminItemsPage() {
                 )}
               </div>
             </div>
-            
           </div>
         </div>
       </div>
@@ -398,7 +482,6 @@ export default function AdminItemsPage() {
       {editItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm dark:bg-black/80">
           <div className="w-full max-w-md bg-white dark:bg-[#111] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 dark:border-white/5">
               <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
@@ -442,11 +525,55 @@ export default function AdminItemsPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wider">
+                  Asal / Origin *
+                </label>
+                <input
+                  required
+                  name="origin"
+                  type="text"
+                  defaultValue={editItem.origin || ""}
+                  placeholder="Contoh: Italia"
+                  className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-white/8 bg-neutral-50 dark:bg-white/5 focus:bg-white dark:focus:bg-white/8 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm placeholder:text-neutral-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wider">
+                    Kreator
+                  </label>
+                  <input
+                    name="creator_name"
+                    type="text"
+                    defaultValue={editItem.creatorName || ""}
+                    placeholder="Contoh: Mpu Gandring"
+                    className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-white/8 bg-neutral-50 dark:bg-white/5 focus:bg-white dark:focus:bg-white/8 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm placeholder:text-neutral-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wider">
+                    Tahun
+                  </label>
+                  <input
+                    name="year"
+                    type="text"
+                    pattern="\d*"
+                    defaultValue={editItem.year || ""}
+                    placeholder="Contoh: 1200"
+                    className="w-full h-11 px-4 rounded-xl border border-neutral-200 dark:border-white/8 bg-neutral-50 dark:bg-white/5 focus:bg-white dark:focus:bg-white/8 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm placeholder:text-neutral-400"
+                  />
+                </div>
+              </div>
+
               {/* Note about 3D Model */}
               <div className="p-3 bg-neutral-50 dark:bg-white/5 rounded-xl border border-neutral-200/50 dark:border-white/5 flex items-start gap-3">
                 <Box className="w-4 h-4 text-neutral-400 mt-0.5 shrink-0" />
                 <p className="text-xs text-neutral-500 dark:text-white/40 leading-relaxed">
-                  File 3D (.glb) saat ini tidak dapat diubah setelah diupload untuk menjaga integritas QR code. Jika artefak berbeda, harap hapus dan upload ulang.
+                  File 3D (.glb) saat ini tidak dapat diubah setelah diupload
+                  untuk menjaga integritas QR code. Jika artefak berbeda, harap
+                  hapus dan upload ulang.
                 </p>
               </div>
 

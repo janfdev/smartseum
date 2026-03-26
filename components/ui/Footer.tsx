@@ -1,4 +1,5 @@
 "use client";
+
 import { cn } from "@/lib/utils";
 import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
@@ -87,11 +88,12 @@ export function Footer() {
 
       <div className="grid w-full gap-8 py-6 md:py-8 px-8  lg:grid-cols-3 lg:gap-8">
         <AnimatedContainer className="space-y-4">
-          <h1 className="text-black dark:text-white transition-colors">
+          <h1 className="text-black font-semibold dark:text-white transition-colors">
             SmartSeum
           </h1>
           <p className="mt-8 text-muted-foreground text-sm md:mt-0">
-            Jembatan antara masa lalu dan masa depan. Temukan keajaiban artefak sejarah melalui teknologi WebAR tercanggih.
+            Jembatan antara masa lalu dan masa depan. Temukan keajaiban artefak
+            sejarah melalui teknologi WebAR tercanggih.
           </p>
         </AnimatedContainer>
 
@@ -124,7 +126,8 @@ export function Footer() {
       <div className="h-px w-full bg-linear-to-r via-border" />
       <div className="flex w-full items-center justify-center py-4">
         <p className="text-muted-foreground text-sm">
-          &copy; {new Date().getFullYear()} SmartSeum. Hak Cipta Dilindungi Undang-Undang.
+          &copy; {new Date().getFullYear()} SmartSeum. Hak Cipta Dilindungi
+          Undang-Undang.
         </p>
       </div>
     </footer>

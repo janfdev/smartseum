@@ -50,6 +50,13 @@
       "when": 1774418113994,
       "tag": "0006_fluffy_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1774498557384,
+      "tag": "0007_flippant_johnny_storm",
+      "breakpoints": true
     }
   ]
 }

@@ -4,7 +4,6 @@ import {
   timestamp,
   pgEnum,
   uuid,
-  boolean,
   integer,
   primaryKey,
 } from "drizzle-orm/pg-core";
@@ -14,7 +13,11 @@ import type { AdapterAccountType } from "next-auth/adapters";
 // Enums
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "uploader"]);
-export const userStatusEnum = pgEnum("user_status", ["pending", "active", "banned"]);
+export const userStatusEnum = pgEnum("user_status", [
+  "pending",
+  "active",
+  "banned",
+]);
 
 // Users Table
 
@@ -33,27 +36,31 @@ export const users = pgTable("users", {
 
 // Accounts Table (untuk Google OAuth)
 
-export const accounts = pgTable("accounts", {
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").$type<AdapterAccountType>().notNull(),
-  provider: text("provider").notNull(),
-  providerAccountId: text("provider_account_id").notNull(),
-  refresh_token: text("refresh_token"),
-  access_token: text("access_token"),
-  expires_at: integer("expires_at"),
-  token_type: text("token_type"),
-  scope: text("scope"),
-  id_token: text("id_token"),
-  session_state: text("session_state"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (account) => ({
-  compoundKey: primaryKey({
-    columns: [account.provider, account.providerAccountId],
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").$type<AdapterAccountType>().notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
   }),
-}));
+);
 
 // Sessions Table
 
@@ -75,7 +82,7 @@ export const verificationTokens = pgTable(
   },
   (vt) => ({
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  })
+  }),
 );
 
 // Items Table (for 3D models)
@@ -85,6 +92,9 @@ export const items = pgTable("items", {
   description: text("description"),
   fileUrl: text("file_url").notNull(),
   qrCodeUrl: text("qr_code_url"),
+  creatorName: text("creator_name"),
+  year: integer("year"),
+  origin: text("origin"),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

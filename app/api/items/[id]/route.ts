@@ -22,11 +22,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const body = await req.json();
-    const { title, description } = body;
+    const { title, description, origin, creatorName, year } = body;
 
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
+    if (origin !== undefined) updateData.origin = origin;
+    if (creatorName !== undefined) updateData.creatorName = creatorName;
+    if (year !== undefined) updateData.year = year;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });

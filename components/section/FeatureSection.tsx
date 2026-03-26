@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Scan,
   Box,
-  Database,
+  Volume2,
   History,
   Smartphone,
   ShieldCheck,
@@ -36,10 +36,10 @@ const FEATURES = [
     bg: "bg-emerald-500/10",
   },
   {
-    icon: Database,
-    title: "Sinkronisasi Real-Time",
+    icon: Volume2,
+    title: "Interactive Audio Guide",
     description:
-      "Data koleksi terhubung langsung dengan sistem admin museum untuk pembaruan informasi yang instan.",
+      "Dengarkan narasi suara memukau di balik setiap mahakarya museum tanpa perlu lelah membaca teks.",
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
   },
@@ -114,7 +114,7 @@ const FeatureSection = () => {
               <motion.div
                 key={i}
                 variants={itemVariants}
-                className="group relative p-8 rounded-[2rem] border border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/[0.08] transition-all duration-500 hover:shadow-2xl hover:border-emerald-500/30 overflow-hidden"
+                className="group relative p-8 rounded-[2rem] border border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/8 transition-all duration-500 hover:shadow-2xl hover:border-emerald-500/30 overflow-hidden"
               >
                 {/* Accent Glow on Hover */}
                 <div

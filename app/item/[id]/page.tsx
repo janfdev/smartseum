@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Download, Scan, ShieldCheck, Sparkles } from "lucide-react";
 import { ModelViewer } from "@/components/artifact/ModelViewer";
 import LandingLayout from "@/components/ui/LandingLayout";
+import { AudioButton } from "@/components/artifact/AudioButton";
 
 export default async function ItemDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -17,7 +18,7 @@ export default async function ItemDetailPage(props: {
   if (itemData.length === 0) notFound();
 
   const item = itemData[0];
-  const year = new Date(item.createdAt).getFullYear();
+  const displayYear = item.year ?? new Date(item.createdAt).getFullYear();
   const shortId = item.id.split("-").pop()?.toUpperCase() ?? item.id;
 
   return (
@@ -60,9 +61,7 @@ export default async function ItemDetailPage(props: {
 
           {/* Floating UI Elements */}
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4">
-            <div
-              className="px-4 py-2 bg-black/80 dark:bg-white/10 backdrop-blur-xl border border-white/10 rounded-full text-[10px] font-bold tracking-[0.3em] uppercase text-white/70 animate-in fade-in slide-in-from-bottom-2 duration-700"
-            >
+            <div className="px-4 py-2 bg-black/80 dark:bg-white/10 backdrop-blur-xl border border-white/10 rounded-full text-[10px] font-bold tracking-[0.3em] uppercase text-white/70 animate-in fade-in slide-in-from-bottom-2 duration-700">
               Interactive 3D Simulation Active
             </div>
           </div>
@@ -79,7 +78,7 @@ export default async function ItemDetailPage(props: {
                 </p>
                 <div className="h-px w-12 bg-emerald-500/30" />
                 <span className="text-[10px] tracking-[0.2em] uppercase text-gray-400 font-mono">
-                  Origin: Museum Vault · {year}
+                  Origin: {item.origin || "Unknown"} · {displayYear}
                 </span>
               </div>
 
@@ -92,10 +91,14 @@ export default async function ItemDetailPage(props: {
                   <ShieldCheck className="w-3 h-3" />
                   Verified Digital Archive
                 </span>
-                <span className="inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase bg-violet-500/10 text-violet-500 border border-violet-500/20 px-4 py-2 rounded-full">
-                  <Sparkles className="w-3 h-3" />
-                  LOD-1 Capture
-                </span>
+
+                <AudioButton
+                  title={item.title}
+                  text={
+                    item.description ||
+                    "Identifikasi mendalam terhadap objek ini sedang dalam proses penelitian lanjutan oleh tim kurator."
+                  }
+                />
               </div>
             </header>
 
@@ -140,19 +143,19 @@ export default async function ItemDetailPage(props: {
               <div className="p-8 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 backdrop-blur-md space-y-8">
                 <div>
                   <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-white/20 mb-3">
-                    Recording Year
+                    Artifact Year
                   </p>
                   <p className="text-2xl font-black text-black dark:text-white tabular-nums">
-                    {year}
+                    {displayYear}
                   </p>
                 </div>
                 <div className="h-px bg-black/10 dark:bg-white/10" />
                 <div>
                   <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-white/20 mb-3">
-                    Classification
+                    Creator / Discovery
                   </p>
                   <p className="text-lg font-bold text-gray-700 dark:text-white/70">
-                    3D Heritage Collection
+                    {item.creatorName || "Unknown / Unrecorded"}
                   </p>
                 </div>
                 <div className="h-px bg-black/10 dark:bg-white/10" />
@@ -200,4 +203,3 @@ export default async function ItemDetailPage(props: {
     </LandingLayout>
   );
 }
-
